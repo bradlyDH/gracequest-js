@@ -1,28 +1,42 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// We'll store data shaped like:
+// Shape we'll store:
 // {
-//   "PATIENCE": { xp: 50, level: 2 },
-//   "FAITH":    { xp: 10, level: 1 },
-//   ...
+//   virtues: {
+//     PATIENCE: { xp: 50, level: 2 },
+//     FAITH:    { xp: 10, level: 1 },
+//     ...
+//   },
+//   streakCount: 3,
+//   lastPlayedDate: "2025-10-24"
 // }
 
-const KEY = 'GRACEQUEST_VIRTUE_PROGRESS';
+const KEY = 'GRACEQUEST_PLAYER_STATE';
 
-export async function loadProgress() {
+export async function loadPlayerState() {
   try {
     const raw = await AsyncStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : {};
+    return raw
+      ? JSON.parse(raw)
+      : {
+          virtues: {},
+          streakCount: 0,
+          lastPlayedDate: null,
+        };
   } catch (e) {
-    console.warn('loadProgress error', e);
-    return {};
+    console.warn('loadPlayerState error', e);
+    return {
+      virtues: {},
+      streakCount: 0,
+      lastPlayedDate: null,
+    };
   }
 }
 
-export async function saveProgress(progressObj) {
+export async function savePlayerState(stateObj) {
   try {
-    await AsyncStorage.setItem(KEY, JSON.stringify(progressObj));
+    await AsyncStorage.setItem(KEY, JSON.stringify(stateObj));
   } catch (e) {
-    console.warn('saveProgress error', e);
+    console.warn('savePlayerState error', e);
   }
 }

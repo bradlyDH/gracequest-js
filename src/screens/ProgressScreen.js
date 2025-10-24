@@ -1,44 +1,54 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-import { loadProgress } from '../storage/progressStorage';
+import { loadPlayerState } from '../storage/progressStorage';
 import VirtueBar from '../components/VirtueBar';
 
 export default function ProgressScreen({ navigation }) {
-  const [progress, setProgress] = useState({});
+  const [virtues, setVirtues] = useState({});
+  const [streakCount, setStreakCount] = useState(0);
+  const [lastPlayedDate, setLastPlayedDate] = useState(null);
 
   useEffect(() => {
     (async () => {
-      const p = await loadProgress();
-      setProgress(p);
+      const state = await loadPlayerState();
+      setVirtues(state.virtues || {});
+      setStreakCount(state.streakCount || 0);
+      setLastPlayedDate(state.lastPlayedDate || null);
     })();
   }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Your Growth in Grace 🌱</Text>
-      <Text style={styles.meta}>Streak: (coming soon)</Text>
-      <Text style={styles.meta}>Last played: (coming soon)</Text>
+
+      <Text style={styles.meta}>
+        Streak: {streakCount} day{streakCount === 1 ? '' : 's'} in a row 🔥
+      </Text>
+
+      <Text style={styles.meta}>
+        Last played: {lastPlayedDate ? lastPlayedDate : '—'}
+      </Text>
 
       <VirtueBar
         virtue="FAITH"
-        level={progress.FAITH?.level || 1}
-        xp={progress.FAITH?.xp || 0}
+        level={virtues.FAITH?.level || 1}
+        xp={virtues.FAITH?.xp || 0}
       />
       <VirtueBar
         virtue="LOVE"
-        level={progress.LOVE?.level || 1}
-        xp={progress.LOVE?.xp || 0}
+        level={virtues.LOVE?.level || 1}
+        xp={virtues.LOVE?.xp || 0}
       />
       <VirtueBar
         virtue="PATIENCE"
-        level={progress.PATIENCE?.level || 1}
-        xp={progress.PATIENCE?.xp || 0}
+        level={virtues.PATIENCE?.level || 1}
+        xp={virtues.PATIENCE?.xp || 0}
       />
       <VirtueBar
         virtue="KINDNESS"
-        level={progress.KINDNESS?.level || 1}
-        xp={progress.KINDNESS?.xp || 0}
+        level={virtues.KINDNESS?.level || 1}
+        xp={virtues.KINDNESS?.xp || 0}
       />
 
       <TouchableOpacity

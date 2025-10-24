@@ -7,32 +7,69 @@ import {
   ScrollView,
 } from 'react-native';
 
-import { loadProgress, saveProgress } from '../storage/progressStorage';
+import { loadPlayerState, savePlayerState } from '../storage/progressStorage';
 import { awardVirtueXp } from '../logic/xpSystem';
+import { getTodayString, isYesterday } from '../logic/dateUtils';
 
 export default function ResultScreen({ route, navigation }) {
   const { virtue, score, total, rewardVerse, baseXp } = route.params;
+
   const [newLevel, setNewLevel] = useState(null);
   const [xpEarned, setXpEarned] = useState(0);
+  const [streakCount, setStreakCount] = useState(0);
+  const [lastPlayedDate, setLastPlayedDate] = useState(null);
 
   useEffect(() => {
     (async () => {
-      // load current XP from storage
-      const current = await loadProgress();
+      // 1. Load current state
+      const state = await loadPlayerState();
+      // ensure virtues map exists
+      const currentVirtues = state.virtues || {};
 
-      // XP is based on how many Christ-like answers they chose
+      // 2. Calculate XP gain for this quest
+      // ratio of "Christ-like" choices
       const ratio = score / total;
       const gained = Math.round(baseXp * ratio);
       setXpEarned(gained);
 
+      // 3. Update virtue XP/level
       const { newProgressObj, newLevel } = awardVirtueXp(
-        current,
+        currentVirtues,
         virtue,
         gained
       );
-
       setNewLevel(newLevel);
-      await saveProgress(newProgressObj);
+
+      // 4. Streak logic
+      const today = getTodayString();
+      let nextStreak = state.streakCount || 0;
+      const lastDate = state.lastPlayedDate;
+
+      if (!lastDate) {
+        // first time ever playing
+        nextStreak = 1;
+      } else if (lastDate === today) {
+        // already played today: streak doesn't change
+        nextStreak = state.streakCount || 1;
+      } else if (isYesterday(lastDate, today)) {
+        // kept streak going
+        nextStreak = (state.streakCount || 0) + 1;
+      } else {
+        // broke streak, reset
+        nextStreak = 1;
+      }
+
+      setStreakCount(nextStreak);
+      setLastPlayedDate(today);
+
+      // 5. Save new state
+      const newStateToSave = {
+        virtues: newProgressObj,
+        streakCount: nextStreak,
+        lastPlayedDate: today,
+      };
+
+      await savePlayerState(newStateToSave);
     })();
   }, [virtue, score, total, rewardVerse, baseXp]);
 
@@ -59,6 +96,16 @@ export default function ResultScreen({ route, navigation }) {
       <View style={styles.verseBox}>
         <Text style={styles.verseText}>"{rewardVerse.text}"</Text>
         <Text style={styles.verseRef}>{rewardVerse.ref}</Text>
+      </View>
+
+      <View style={styles.streakBox}>
+        <Text style={styles.streakTitle}>Streak 🔥</Text>
+        <Text style={styles.streakText}>
+          {streakCount} day{streakCount === 1 ? '' : 's'} in a row
+        </Text>
+        {lastPlayedDate && (
+          <Text style={styles.streakMeta}>Last played: {lastPlayedDate}</Text>
+        )}
       </View>
 
       <TouchableOpacity
@@ -116,6 +163,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
     marginTop: 8,
+  },
+  streakBox: {
+    backgroundColor: '#fff6e0',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: '#ffdd8a',
+  },
+  streakTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  streakText: {
+    fontSize: 16,
+    marginTop: 4,
+  },
+  streakMeta: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 4,
   },
   primaryBtn: {
     backgroundColor: '#4b6fff',

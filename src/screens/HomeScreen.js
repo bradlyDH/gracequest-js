@@ -7,16 +7,16 @@ import {
   ScrollView,
 } from 'react-native';
 import VirtueBar from '../components/VirtueBar';
-import { loadProgress } from '../storage/progressStorage';
+import { loadPlayerState } from '../storage/progressStorage';
 import { dailyQuest } from '../data/dailyQuest_sample';
 
 export default function HomeScreen({ navigation }) {
-  const [progress, setProgress] = useState({});
+  const [virtues, setVirtues] = useState({});
 
   useEffect(() => {
     (async () => {
-      const p = await loadProgress();
-      setProgress(p);
+      const state = await loadPlayerState();
+      setVirtues(state.virtues || {});
     })();
   }, []);
 
@@ -44,23 +44,23 @@ export default function HomeScreen({ navigation }) {
 
       <VirtueBar
         virtue="FAITH"
-        level={progress.FAITH?.level || 1}
-        xp={progress.FAITH?.xp || 0}
+        level={virtues.FAITH?.level || 1}
+        xp={virtues.FAITH?.xp || 0}
       />
       <VirtueBar
         virtue="LOVE"
-        level={progress.LOVE?.level || 1}
-        xp={progress.LOVE?.xp || 0}
+        level={virtues.LOVE?.level || 1}
+        xp={virtues.LOVE?.xp || 0}
       />
       <VirtueBar
         virtue="PATIENCE"
-        level={progress.PATIENCE?.level || 1}
-        xp={progress.PATIENCE?.xp || 0}
+        level={virtues.PATIENCE?.level || 1}
+        xp={virtues.PATIENCE?.xp || 0}
       />
       <VirtueBar
         virtue="KINDNESS"
-        level={progress.KINDNESS?.level || 1}
-        xp={progress.KINDNESS?.xp || 0}
+        level={virtues.KINDNESS?.level || 1}
+        xp={virtues.KINDNESS?.xp || 0}
       />
 
       <TouchableOpacity
