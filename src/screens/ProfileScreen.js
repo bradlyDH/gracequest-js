@@ -82,7 +82,8 @@ export default function ProfileScreen({ navigation }) {
           placeholderTextColor="#999"
         />
         <Text style={styles.hint}>
-          We'll show this verse on Home as a reminder.
+          We'll show this verse on Home as a reminder. This is also good for
+          working on memory verses.
         </Text>
       </View>
 

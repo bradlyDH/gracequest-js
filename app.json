@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "gracequest-js",
+    "name": "GraceQuest",
     "slug": "gracequest-js",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,8 +10,9 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#f8f9ff"
     },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },

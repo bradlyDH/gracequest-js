@@ -21,15 +21,27 @@ export default function HomeScreen({ navigation }) {
   const [favoriteVerseText, setFavoriteVerseText] = useState(null);
   const [favoriteVerseRef, setFavoriteVerseRef] = useState(null);
 
+  const [receivedEncouragements, setReceivedEncouragements] = useState([]);
+  const [prayerRequests, setPrayerRequests] = useState([]);
+
   const todaysQuest = useMemo(() => getTodaysQuest(), []);
   const { virtue, emoji, color } = todaysQuest;
 
   const today = getTodayString();
   const alreadyCompletedToday = lastPlayedDate === today;
 
+  // We'll pick the first encouragement and first prayer for now.
+  const todaysEncouragement =
+    encouragementNotes.length > 0 ? encouragementNotes[0] : null;
+
+  // pick the first active (unanswered) request
+  const activeOnly = prayerRequests.filter((r) => !r.answered);
+  const todaysPrayer = activeOnly.length > 0 ? activeOnly[0] : null;
+
   useEffect(() => {
     (async () => {
       const state = await loadPlayerState();
+
       setVirtues(state.virtues || {});
       setStreakCount(state.streakCount || 0);
       setLastPlayedDate(state.lastPlayedDate || null);
@@ -37,12 +49,15 @@ export default function HomeScreen({ navigation }) {
       setPlayerName(state.playerName || null);
       setFavoriteVerseText(state.favoriteVerseText || null);
       setFavoriteVerseRef(state.favoriteVerseRef || null);
+
+      setEncouragementNotes(state.encouragementNotes || []);
+      setPrayerRequests(state.prayerRequests || []);
     })();
   }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Greeting + profile verse */}
+      {/* Greeting / Profile */}
       <View style={styles.headerBlock}>
         <View style={styles.headerRow}>
           <Text style={styles.greeting}>
@@ -71,7 +86,7 @@ export default function HomeScreen({ navigation }) {
         )}
       </View>
 
-      {/* Streak encouragement */}
+      {/* Streak */}
       <View style={styles.streakCard}>
         <Text style={styles.streakMain}>
           {streakCount} day{streakCount === 1 ? '' : 's'} in a row 🔥
@@ -83,7 +98,66 @@ export default function HomeScreen({ navigation }) {
         )}
       </View>
 
-      {/* Today's Quest Card */}
+      {/* Today's Encouragement */}
+      <View style={styles.blockCard}>
+        <View style={styles.blockHeaderRow}>
+          <Text style={styles.blockTitle}>Today’s Encouragement 💬</Text>
+          <TouchableOpacity
+            style={styles.smallBtn}
+            onPress={() => navigation.navigate('Encourage')}
+          >
+            <Text style={styles.smallBtnText}>Write One</Text>
+          </TouchableOpacity>
+        </View>
+
+        {todaysEncouragement ? (
+          <>
+            {todaysEncouragement.toName ? (
+              <Text style={styles.blockMeta}>
+                For {todaysEncouragement.toName}
+              </Text>
+            ) : null}
+            <Text style={styles.blockBody}>{todaysEncouragement.text}</Text>
+          </>
+        ) : (
+          <Text style={styles.blockEmpty}>
+            You haven't written an encouragement yet. Speak life into someone
+            you love.
+          </Text>
+        )}
+      </View>
+
+      {/* Prayer Focus */}
+      <View style={styles.blockCard}>
+        <View style={styles.blockHeaderRow}>
+          <Text style={styles.blockTitle}>Prayer Focus 🙏</Text>
+          <TouchableOpacity
+            style={styles.smallBtn}
+            onPress={() => navigation.navigate('Prayer')}
+          >
+            <Text style={styles.smallBtnText}>Add Prayer</Text>
+          </TouchableOpacity>
+        </View>
+
+        {todaysPrayer ? (
+          <>
+            <Text style={styles.blockMeta}>{todaysPrayer.title}</Text>
+            {todaysPrayer.note ? (
+              <Text style={styles.blockBody}>{todaysPrayer.note}</Text>
+            ) : null}
+            <Text style={styles.blockFoot}>
+              Last prayed:{' '}
+              {todaysPrayer.lastPrayedDate ? todaysPrayer.lastPrayedDate : '—'}
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.blockEmpty}>
+            No requests yet. Add someone (or yourself) to pray for today.
+          </Text>
+        )}
+      </View>
+
+      {/* Today's Quest */}
       <View style={[styles.card, { borderColor: color + '55' }]}>
         {!alreadyCompletedToday ? (
           <>
@@ -122,7 +196,7 @@ export default function HomeScreen({ navigation }) {
         )}
       </View>
 
-      {/* Growth section */}
+      {/* Growth bars */}
       <Text style={styles.sectionHeader}>Your Growth</Text>
 
       <VirtueBar
@@ -226,6 +300,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#444',
     marginTop: 4,
+  },
+
+  blockCard: {
+    borderRadius: 16,
+    backgroundColor: '#f8f9ff',
+    borderWidth: 2,
+    borderColor: '#ccd2ff',
+    padding: 16,
+    marginBottom: 24,
+  },
+  blockHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 8,
+  },
+  blockTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+  },
+  smallBtn: {
+    backgroundColor: '#4b6fff',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+  },
+  smallBtnText: {
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  blockMeta: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#444',
+    marginBottom: 4,
+  },
+  blockBody: {
+    fontSize: 15,
+    color: '#222',
+    lineHeight: 20,
+  },
+  blockFoot: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 8,
+  },
+  blockEmpty: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#666',
+    lineHeight: 20,
   },
 
   card: {
