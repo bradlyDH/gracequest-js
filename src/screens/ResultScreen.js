@@ -12,27 +12,28 @@ import { awardVirtueXp } from '../logic/xpSystem';
 import { getTodayString, isYesterday } from '../logic/dateUtils';
 
 export default function ResultScreen({ route, navigation }) {
-  const { virtue, score, total, rewardVerse, baseXp } = route.params;
+  const { virtue, score, total, rewardVerse, baseXp, color, emoji } =
+    route.params;
 
   const [newLevel, setNewLevel] = useState(null);
   const [xpEarned, setXpEarned] = useState(0);
   const [streakCount, setStreakCount] = useState(0);
   const [lastPlayedDate, setLastPlayedDate] = useState(null);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     (async () => {
-      // 1. Load current state
+      if (saved) return;
+      setSaved(true);
+
       const state = await loadPlayerState();
-      // ensure virtues map exists
       const currentVirtues = state.virtues || {};
 
-      // 2. Calculate XP gain for this quest
-      // ratio of "Christ-like" choices
+      // XP gain from this run
       const ratio = score / total;
       const gained = Math.round(baseXp * ratio);
       setXpEarned(gained);
 
-      // 3. Update virtue XP/level
       const { newProgressObj, newLevel } = awardVirtueXp(
         currentVirtues,
         virtue,
@@ -40,29 +41,24 @@ export default function ResultScreen({ route, navigation }) {
       );
       setNewLevel(newLevel);
 
-      // 4. Streak logic
+      // streak/update last played
       const today = getTodayString();
       let nextStreak = state.streakCount || 0;
-      const lastDate = state.lastPlayedDate;
+      const prevDate = state.lastPlayedDate;
 
-      if (!lastDate) {
-        // first time ever playing
+      if (!prevDate) {
         nextStreak = 1;
-      } else if (lastDate === today) {
-        // already played today: streak doesn't change
+      } else if (prevDate === today) {
         nextStreak = state.streakCount || 1;
-      } else if (isYesterday(lastDate, today)) {
-        // kept streak going
+      } else if (isYesterday(prevDate, today)) {
         nextStreak = (state.streakCount || 0) + 1;
       } else {
-        // broke streak, reset
         nextStreak = 1;
       }
 
       setStreakCount(nextStreak);
       setLastPlayedDate(today);
 
-      // 5. Save new state
       const newStateToSave = {
         virtues: newProgressObj,
         streakCount: nextStreak,
@@ -71,13 +67,13 @@ export default function ResultScreen({ route, navigation }) {
 
       await savePlayerState(newStateToSave);
     })();
-  }, [virtue, score, total, rewardVerse, baseXp]);
+  }, [virtue, score, total, rewardVerse, baseXp, saved]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Well done 🙌</Text>
-
-      <Text style={styles.sub}>You grew in {virtue} today.</Text>
+      <Text style={[styles.title, { color }]}>
+        {emoji} You grew in {virtue} today.
+      </Text>
 
       <Text style={styles.scoreText}>
         You chose Christ-like answers {score} / {total} times.
@@ -88,17 +84,17 @@ export default function ResultScreen({ route, navigation }) {
       </Text>
 
       {newLevel && (
-        <Text style={styles.levelText}>
+        <Text style={[styles.levelText, { color }]}>
           {virtue} Level: {newLevel}
         </Text>
       )}
 
-      <View style={styles.verseBox}>
+      <View style={[styles.verseBox, { borderColor: color + '55' }]}>
         <Text style={styles.verseText}>"{rewardVerse.text}"</Text>
         <Text style={styles.verseRef}>{rewardVerse.ref}</Text>
       </View>
 
-      <View style={styles.streakBox}>
+      <View style={[styles.streakBox, { borderColor: color + '55' }]}>
         <Text style={styles.streakTitle}>Streak 🔥</Text>
         <Text style={styles.streakText}>
           {streakCount} day{streakCount === 1 ? '' : 's'} in a row
@@ -109,7 +105,7 @@ export default function ResultScreen({ route, navigation }) {
       </View>
 
       <TouchableOpacity
-        style={styles.primaryBtn}
+        style={[styles.primaryBtn, { backgroundColor: color }]}
         onPress={() => navigation.navigate('Progress')}
       >
         <Text style={styles.primaryBtnText}>View My Progress 🌱</Text>
@@ -119,7 +115,7 @@ export default function ResultScreen({ route, navigation }) {
         style={styles.secondaryBtn}
         onPress={() => navigation.navigate('Home')}
       >
-        <Text style={styles.secondaryBtnText}>Back to Home</Text>
+        <Text style={[styles.secondaryBtnText, { color }]}>Back to Home</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -132,28 +128,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '600',
-  },
-  sub: {
-    fontSize: 16,
-    marginTop: 8,
+    marginBottom: 12,
   },
   scoreText: {
     fontSize: 16,
-    marginTop: 16,
+    marginTop: 8,
   },
   levelText: {
     fontSize: 18,
     fontWeight: '600',
     marginTop: 8,
-    color: '#4b6fff',
   },
   verseBox: {
     backgroundColor: '#eef2ff',
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
+    borderWidth: 2,
   },
   verseText: {
     fontSize: 16,
@@ -169,8 +162,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
-    borderWidth: 1,
-    borderColor: '#ffdd8a',
+    borderWidth: 2,
   },
   streakTitle: {
     fontSize: 16,
@@ -186,7 +178,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryBtn: {
-    backgroundColor: '#4b6fff',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -203,7 +194,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   secondaryBtnText: {
-    color: '#4b6fff',
     fontWeight: '600',
   },
 });

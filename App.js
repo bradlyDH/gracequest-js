@@ -6,6 +6,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import QuestScreen from './src/screens/QuestScreen';
 import ResultScreen from './src/screens/ResultScreen';
 import ProgressScreen from './src/screens/ProgressScreen';
+import ProfileScreen from './src/screens/ProfileScreen'; // NEW
 
 const Stack = createStackNavigator();
 
@@ -14,13 +15,14 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{
-          headerShown: false, // we’ll do our own headers / titles
+          headerShown: false,
         }}
       >
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Quest" component={QuestScreen} />
         <Stack.Screen name="Result" component={ResultScreen} />
         <Stack.Screen name="Progress" component={ProgressScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

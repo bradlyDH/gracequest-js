@@ -10,10 +10,11 @@ import AnswerOption from '../components/AnswerOption';
 
 export default function QuestScreen({ route, navigation }) {
   const { quest } = route.params;
+  const { virtue, emoji, color } = quest;
 
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState(null);
-  const [score, setScore] = useState(0); // number of best answers chosen
+  const [score, setScore] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
 
   const question = quest.questions[qIndex];
@@ -32,25 +33,27 @@ export default function QuestScreen({ route, navigation }) {
   function handleNext() {
     const nextIndex = qIndex + 1;
     if (nextIndex < quest.questions.length) {
-      // move to next question
       setQIndex(nextIndex);
       setSelected(null);
       setShowFeedback(false);
     } else {
-      // done! go to results
       navigation.navigate('Result', {
         virtue: quest.virtue,
         score,
         total: quest.questions.length,
         rewardVerse: quest.rewardVerse,
         baseXp: quest.baseXp,
+        color: quest.color,
+        emoji: quest.emoji,
       });
     }
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.virtueLabel}>{quest.virtue} Quest</Text>
+      <Text style={[styles.virtueLabel, { color }]}>
+        {emoji} {virtue} Quest
+      </Text>
       <Text style={styles.progressText}>
         Question {qIndex + 1} of {quest.questions.length}
       </Text>
@@ -68,17 +71,23 @@ export default function QuestScreen({ route, navigation }) {
       ))}
 
       {!showFeedback && (
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
+        <TouchableOpacity
+          style={[styles.submitBtn, { backgroundColor: color }]}
+          onPress={handleSubmit}
+        >
           <Text style={styles.submitBtnText}>Submit Answer</Text>
         </TouchableOpacity>
       )}
 
       {showFeedback && (
-        <View style={styles.feedbackBlock}>
+        <View style={[styles.feedbackBlock, { borderColor: color + '55' }]}>
           <Text style={styles.feedbackTitle}>Thanks for your answer 🙌</Text>
           <Text style={styles.feedbackText}>{question.feedback}</Text>
 
-          <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
+          <TouchableOpacity
+            style={[styles.nextBtn, { backgroundColor: color }]}
+            onPress={handleNext}
+          >
             <Text style={styles.nextBtnText}>Next ▶</Text>
           </TouchableOpacity>
         </View>
@@ -107,7 +116,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitBtn: {
-    backgroundColor: '#4b6fff',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -122,6 +130,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#eef2ff',
     borderRadius: 12,
     padding: 16,
+    borderWidth: 2,
   },
   feedbackTitle: {
     fontWeight: '600',
@@ -134,7 +143,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   nextBtn: {
-    backgroundColor: '#4b6fff',
     paddingVertical: 10,
     borderRadius: 10,
     alignItems: 'center',
